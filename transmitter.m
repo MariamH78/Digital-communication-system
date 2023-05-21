@@ -10,13 +10,32 @@ classdef transmitter
   endproperties
 
   methods
-    function obj = transmitter (varargin)
+    function obj = transmitter (input_stream, bitrate)
       obj.stream = [];
       time_domain_vector = [];
       obj.line_coded_stream = [];
       obj.bpsk_modulated = [];
       obj.line_coding_style = '';
       obj.stream_size = 0;
+      if (nargin >= 1)
+        if size(input_stream)(1) ~= 1 || size(input_stream(2)) == 0
+          error("Array dimensions don't conform to transmitter class's specifications. Array must be 1xN, and N must be larger than 0.");
+        endif
+        for i = 1 : length(input_stream)
+          if input_stream(i) ~= 0 && input_stream(i) ~= 1
+            error(["Data entered must have only 0's and 1's. The entry number " string(i) " is neither."]);
+          endif
+        endfor
+        obj.stream = repelem(input_stream, 2);
+        obj.stream_size = length(input_stream);
+        if (nargin >= 2)
+          obj.time_limit = obj.stream_size * 1/bitrate - 1/bitrate;
+        else
+          obj.time_limit = obj.stream_size * 1/100 - 1/100;
+        endif
+
+      endif
+
     endfunction
 
     function obj = create_stream (obj, stream_size, bitrate)
@@ -157,7 +176,7 @@ classdef transmitter
           endif
         endfor
       endif
-    obj.line_coded_stream = [obj.line_coded_stream  obj.line_coded_stream(length(obj.line_coded_stream))];
+
 
     endfunction
 
@@ -170,10 +189,41 @@ classdef transmitter
       endif
 
       obj.bpsk_modulated = zeros(1, obj.stream_size * 2/0.01);
-      temp = repelem(obj.line_coded_stream(1 : length(obj.line_coded_stream) - 1), 100);
+      temp = repelem(obj.line_coded_stream, 100);
       for i = 1 : length(temp)
         obj.bpsk_modulated (i) = cos(2 * 3.14159265  * 10000000 * i) * temp(i);
       endfor
+    endfunction
+
+    function plot(obj, param)
+      if ~isa(obj, 'transmitter')
+        error("Passed object is not of the transmitter type.");
+      endif
+      if nargin < 2
+        error("You must include the parameter you want to plot.");
+      endif
+
+      if strcmp(param, 'stream') == 1
+        stream = [obj.stream  obj.stream(length(obj.stream))];
+        stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        title('Unmodified bits stream (0/1)', 'FontSize', 20);
+        xlabel('Time (in S)', 'FontSize', 18);
+        ylabel('Data (0/1)', 'FontSize', 18);
+      elseif strcmp(param, 'line_coded_stream') == 1
+        line_coded_stream = [obj.line_coded_stream  obj.line_coded_stream(length(obj.line_coded_stream))];
+        stairs(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
+        title(['Line coded bits stream (encoded using '  obj.line_coding_style  ')'], 'FontSize', 20);
+        xlabel('Time (in S)', 'FontSize', 18);
+        ylabel('Volt (in V)', 'FontSize', 18);
+      elseif strcmp(param, 'bpsk_modulated') == 1
+        plot(linspace(0, obj.time_limit, length(obj.bpsk_modulated)), obj.bpsk_modulated, 'LineWidth',1.5, 'Color', "#f77f00");
+        title('BPSK modulated stream', 'FontSize', 20);
+        xlabel('Time (in S)', 'FontSize', 18);
+        ylabel('Amplitude (in V)', 'FontSize', 18);
+      else
+        error("The parameter passed to the function doesn't exist.");
+      endif
+
     endfunction
 
   endmethods
