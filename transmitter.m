@@ -1,33 +1,41 @@
 classdef transmitter
   properties
     stream = [];
+    time_limit = 0.0;
     line_coded_stream = [];
     bpsk_modulated = [];
     line_coding_style = '';
     stream_size = 0;
+
   endproperties
 
   methods
     function obj = transmitter (varargin)
       obj.stream = [];
+      time_domain_vector = [];
       obj.line_coded_stream = [];
       obj.bpsk_modulated = [];
       obj.line_coding_style = '';
       obj.stream_size = 0;
     endfunction
 
-    function obj = create_stream (obj, stream_size)
+    function obj = create_stream (obj, stream_size, bitrate)
       if ~isa(obj, 'transmitter')
         error("Passed object is not of the transmitter type.");
       endif
-      if nargin == 0 || nargin == 1 || (nargin == 2 && stream_size == 0)
+      if nargin < 3
+          bitrate = 100;
+      endif
+      if nargin == 0 || nargin == 1 || (nargin >= 2 && stream_size == 0)
         temp = randi([0 1], 1, 10000);
-        obj.stream = repelem(temp, 2)
+        obj.stream = repelem(temp, 2);
         obj.stream_size = 10000;
+        obj.time_limit = 10000.0 * 1/bitrate - 1/bitrate;
       else
         temp = randi([0 1], 1, stream_size);
-        obj.stream = repelem(temp, 2)
+        obj.stream = repelem(temp, 2);
         obj.stream_size = stream_size;
+        obj.time_limit = stream_size * 1/bitrate - 1/bitrate;
       endif
 
     endfunction
@@ -53,9 +61,7 @@ classdef transmitter
             obj.line_coded_stream(i) = vcc_positive;
           endif
         endfor
-      endif
-
-      if (strcmp(line_coding_style, "urz") == 1)
+      elseif (strcmp(line_coding_style, "urz") == 1)
         obj.line_coded_stream = zeros (1, obj.stream_size * 2);
         for i = 1 : obj.stream_size * 2
           if (obj.stream(i) == 1 && (mod(i, 2) == 1))
@@ -151,6 +157,8 @@ classdef transmitter
           endif
         endfor
       endif
+    obj.line_coded_stream = [obj.line_coded_stream  obj.line_coded_stream(length(obj.line_coded_stream))];
+
     endfunction
 
     function obj = bpsk (obj)
@@ -162,17 +170,13 @@ classdef transmitter
       endif
 
       obj.bpsk_modulated = zeros(1, obj.stream_size * 2/0.01);
-      for i = 1 : obj.stream_size * 2
-        for j = (i) * 100 + 1 : (i+1) * 100 + 1
-          obj.bpsk_modulated (j) = cos(2 * 3.14159265  * 10000000 * j) * obj.line_coded_stream(i);
-        endfor
+      temp = repelem(obj.line_coded_stream(1 : length(obj.line_coded_stream) - 1), 100);
+      for i = 1 : length(temp)
+        obj.bpsk_modulated (i) = cos(2 * 3.14159265  * 10000000 * i) * temp(i);
       endfor
-      obj.bpsk_modulated = obj.bpsk_modulated(1:obj.stream_size * 2 / 0.01);
     endfunction
 
   endmethods
 endclassdef
-
-
 
 
