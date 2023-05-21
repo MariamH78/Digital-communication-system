@@ -2,6 +2,8 @@ classdef transmitter
   properties
     stream = [];
     line_coded_stream = [];
+    bpsk_modulated = [];
+    line_coding_style = '';
     stream_size = 0;
   endproperties
 
@@ -9,10 +11,15 @@ classdef transmitter
     function obj = transmitter (varargin)
       obj.stream = [];
       obj.line_coded_stream = [];
+      obj.bpsk_modulated = [];
+      obj.line_coding_style = '';
       obj.stream_size = 0;
     endfunction
 
     function obj = create_stream (obj, stream_size)
+      if ~isa(obj, 'transmitter')
+        error("Passed object is not of the transmitter type.");
+      endif
       if nargin == 0 || nargin == 1 || (nargin == 2 && stream_size == 0)
         temp = randi([0 1], 1, 10000);
         obj.stream = repelem(temp, 2)
@@ -26,12 +33,18 @@ classdef transmitter
     endfunction
 
     function obj = line_code (obj, line_coding_style, vcc_positive, vcc_negative)
+      if ~isa(obj, 'transmitter')
+        error("Passed object is not of the transmitter type.");
+      endif
+
       if obj.stream_size == 0
         error("You need to call create_stream first!");
       endif
       if nargin < 3
         error("Not enough arguments. Make sure to enter both line coding style and vcc.");
       endif
+
+      obj.line_coding_style = line_coding_style;
 
       if (strcmp(line_coding_style, "unrz") == 1)
         obj.line_coded_stream = zeros (1, obj.stream_size * 2);
@@ -138,8 +151,25 @@ classdef transmitter
           endif
         endfor
       endif
-
     endfunction
+
+    function obj = bpsk (obj)
+      if ~isa(obj, 'transmitter')
+        error("Passed object is not of the transmitter type.");
+      endif
+      if isnull(obj.line_coded_stream) || strcmp(obj.line_coding_style, 'pnrz') ~= 1
+        error("transmitter_object.line_code('pnrz', vcc) must be called first.");
+      endif
+
+      obj.bpsk_modulated = zeros(1, obj.stream_size * 2/0.01);
+      for i = 1 : obj.stream_size * 2
+        for j = (i) * 100 + 1 : (i+1) * 100 + 1
+          obj.bpsk_modulated (j) = cos(2 * 3.14159265  * 10000000 * j) * obj.line_coded_stream(i);
+        endfor
+      endfor
+      obj.bpsk_modulated = obj.bpsk_modulated(1:obj.stream_size * 2 / 0.01);
+    endfunction
+
   endmethods
 endclassdef
 
