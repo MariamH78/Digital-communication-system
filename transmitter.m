@@ -288,6 +288,33 @@ classdef transmitter
       ylabel('Magnitude', 'FontSize', 18);
       axis([-4 4 0 (max(obj.line_coded_stream)/50)]); %heuristic
     endfunction
+
+    function plot_eyediagram(obj, stream)
+      if (nargin < 2)
+        stream = line_coded_stream
+      elseif strcmp(stream, 'line_coded_stream') ~= 1 && strcmp(stream, 'stream') ~= 1
+        error("The given parameter is not supported by this function. This function only supports 'stream' and 'line_coded_stream'");
+      endif
+
+      figure;
+      hold on
+
+      for i = 1 : 8 : length(obj.(stream))
+        stairs(obj.(stream)(i : min(i + 8, length(obj.(stream)))), 'Color', "#8a4f15", 'LineWidth', 1.75);
+      endfor
+
+      if strcmp(stream, 'line_coded_stream')
+        title(['Eyediagram for ' obj.line_coding_style ' line-coded stream'], 'FontSize', 20);
+      else
+        title('Eyediagram for transmitted 0/1 stream', 'FontSize', 20);
+      endif
+
+      axis([3 9])
+      set(gca,'XTick',[]);
+
+      hold off
+
+    endfunction
   endmethods
 endclassdef
 

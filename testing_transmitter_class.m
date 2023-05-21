@@ -5,13 +5,12 @@ graphics_toolkit('fltk')
 
 tee = transmitter();
 tee = create_stream(tee, 100);
-tee = tee.line_code("pnrz", 1);
-tee = tee.bpsk();
+tee = tee.line_code("bpnrz", 1.2);
+%tee = tee.bpsk();
 
 
-subplot (2, 1, 1)
-plot_line_code_power_spectrum(tee.line_code("urz", 1.2));
+tee.plot_eyediagram('stream')
+tee.plot_eyediagram('line_coded_stream')
 
-subplot (2, 1, 2)
-tee.plot_bpsk_power_spectrum()
+
 
