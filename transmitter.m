@@ -63,117 +63,121 @@ classdef transmitter
       if obj.stream_size == 0
         error("You need to call create_stream first!");
       endif
+
       if nargin < 3
         error("Not enough arguments. Make sure to enter both line coding style and vcc.");
       endif
 
       obj.line_coding_style = line_coding_style;
-
-      if (strcmp(line_coding_style, "unrz") == 1)
-        obj.line_coded_stream = zeros (1, obj.stream_size * 2);
-        for i = 1 : obj.stream_size * 2
-          if (obj.stream(i) == 1)
-            obj.line_coded_stream(i) = vcc_positive;
-          endif
-        endfor
-      elseif (strcmp(line_coding_style, "urz") == 1)
-        obj.line_coded_stream = zeros (1, obj.stream_size * 2);
-        for i = 1 : obj.stream_size * 2
-          if (obj.stream(i) == 1 && (mod(i, 2) == 1))
-            obj.line_coded_stream(i) = vcc_positive;
-          endif
-        endfor
-
-      elseif (strcmp(line_coding_style, "pnrz") == 1)
-        if nargin < 4
-          vcc_negative = vcc_positive * -1;
-        endif
-
-        obj.line_coded_stream = zeros (1, obj.stream_size * 2);
-        for i = 1 : obj.stream_size * 2
-          if (obj.stream(i) == 1)
-            obj.line_coded_stream(i) = vcc_positive;
-          else
-            obj.line_coded_stream(i) = vcc_negative;
-          endif
-        endfor
-
-     elseif (strcmp(line_coding_style, "prz") == 1)
-        if nargin < 4
-          vcc_negative = vcc_positive * -1;
-        endif
-
-        obj.line_coded_stream = zeros (1, obj.stream_size * 2);
-        for i = 1 : obj.stream_size * 2
-          if (obj.stream(i) == 1 && (mod(i, 2) == 1))
-            obj.line_coded_stream(i) = vcc_positive;
-          elseif mod(i, 2) == 1
-            obj.line_coded_stream(i) = vcc_negative;
-          endif
-        endfor
-
-      elseif (strcmp(line_coding_style, "bpnrz") == 1)
-        if nargin < 4
-          vcc_negative = vcc_positive * -1;
-        endif
-
-        flag = 1;
-        obj.line_coded_stream = zeros (1, obj.stream_size * 2);
-        for i = 1 : obj.stream_size * 2
-          if (obj.stream(i) == 1 && flag)
-            obj.line_coded_stream(i) = vcc_positive;
-            if (mod(i, 2) == 0)
-              flag = 0;
+      styles = {'unrz' 'urz' 'pnrz' 'prz' 'bpnrz' 'bprz' 'manchester'};
+      index = find(strcmp(styles, line_coding_style));
+      switch index
+        case 1 %unipolar non-return to zero
+          obj.line_coded_stream = zeros (1, obj.stream_size * 2);
+          for i = 1 : obj.stream_size * 2
+            if (obj.stream(i) == 1)
+              obj.line_coded_stream(i) = vcc_positive;
             endif
-          elseif (obj.stream(i) == 1 && ~flag)
-            obj.line_coded_stream(i) = vcc_negative;
-            if (mod(i, 2) == 0)
+          endfor
+        case 2  %unipolar return to zero
+          obj.line_coded_stream = zeros (1, obj.stream_size * 2);
+          for i = 1 : obj.stream_size * 2
+            if (obj.stream(i) == 1 && (mod(i, 2) == 1))
+              obj.line_coded_stream(i) = vcc_positive;
+            endif
+          endfor
+
+        case 3 %polar non-return to zero
+          if nargin < 4
+            vcc_negative = vcc_positive * -1;
+          endif
+
+          obj.line_coded_stream = zeros (1, obj.stream_size * 2);
+          for i = 1 : obj.stream_size * 2
+            if (obj.stream(i) == 1)
+              obj.line_coded_stream(i) = vcc_positive;
+            else
+              obj.line_coded_stream(i) = vcc_negative;
+            endif
+          endfor
+
+        case 4 %polar return to zero
+          if nargin < 4
+            vcc_negative = vcc_positive * -1;
+          endif
+
+          obj.line_coded_stream = zeros (1, obj.stream_size * 2);
+          for i = 1 : obj.stream_size * 2
+            if (obj.stream(i) == 1 && (mod(i, 2) == 1))
+              obj.line_coded_stream(i) = vcc_positive;
+            elseif mod(i, 2) == 1
+              obj.line_coded_stream(i) = vcc_negative;
+            endif
+          endfor
+
+        case 5 %bipolar non-return to zero
+          if nargin < 4
+            vcc_negative = vcc_positive * -1;
+          endif
+
+          flag = 1;
+          obj.line_coded_stream = zeros (1, obj.stream_size * 2);
+          for i = 1 : obj.stream_size * 2
+            if (obj.stream(i) == 1 && flag)
+              obj.line_coded_stream(i) = vcc_positive;
+              if (mod(i, 2) == 0)
+                flag = 0;
+              endif
+            elseif (obj.stream(i) == 1 && ~flag)
+              obj.line_coded_stream(i) = vcc_negative;
+              if (mod(i, 2) == 0)
+                flag = 1;
+              endif
+            endif
+          endfor
+
+        case 6 %bipolar return to zero
+          if nargin < 4
+            vcc_negative = vcc_positive * -1;
+          endif
+
+          flag = 1;
+          obj.line_coded_stream = zeros (1, obj.stream_size * 2);
+          for i = 1 : obj.stream_size * 2
+            if (obj.stream(i) == 1 && flag && (mod(i, 2) == 1))
+              obj.line_coded_stream(i) = vcc_positive;
+              flag = 0;
+            elseif (obj.stream(i) == 1 && ~flag && (mod(i, 2) == 1))
+              obj.line_coded_stream(i) = vcc_negative;
               flag = 1;
             endif
+          endfor
+
+        case 7 %manchester
+          if nargin < 4
+            vcc_negative = vcc_positive * -1;
           endif
-        endfor
 
-      elseif (strcmp(line_coding_style, "bprz") == 1)
-        if nargin < 4
-          vcc_negative = vcc_positive * -1;
-        endif
-
-        flag = 1;
-        obj.line_coded_stream = zeros (1, obj.stream_size * 2);
-        for i = 1 : obj.stream_size * 2
-          if (obj.stream(i) == 1 && flag && (mod(i, 2) == 1))
-            obj.line_coded_stream(i) = vcc_positive;
-            flag = 0;
-          elseif (obj.stream(i) == 1 && ~flag && (mod(i, 2) == 1))
-            obj.line_coded_stream(i) = vcc_negative;
-            flag = 1;
-          endif
-        endfor
-
-      elseif (strcmp(line_coding_style, "manchester") == 1)
-        if nargin < 4
-          vcc_negative = vcc_positive * -1;
-        endif
-
-        obj.line_coded_stream = zeros (1, obj.stream_size * 2);
-        for i = 1 : obj.stream_size * 2
-          if (obj.stream(i) == 1)
-            if (mod(i, 2) == 1)
-              obj.line_coded_stream(i) = vcc_positive;
+          obj.line_coded_stream = zeros (1, obj.stream_size * 2);
+          for i = 1 : obj.stream_size * 2
+            if (obj.stream(i) == 1)
+              if (mod(i, 2) == 1)
+                obj.line_coded_stream(i) = vcc_positive;
+              else
+                obj.line_coded_stream(i) = vcc_negative;
+              endif
             else
-              obj.line_coded_stream(i) = vcc_negative;
+              if (mod(i, 2) == 1)
+                obj.line_coded_stream(i) = vcc_negative;
+              else
+                obj.line_coded_stream(i) = vcc_positive;
+              endif
             endif
-          else
-            if (mod(i, 2) == 1)
-              obj.line_coded_stream(i) = vcc_negative;
-            else
-              obj.line_coded_stream(i) = vcc_positive;
-            endif
-          endif
-        endfor
-      else
-        error(["The selected line coding style, '" line_coding_style "', is not supported."]);
-      endif
+          endfor
+
+        otherwise
+          error(["The selected line coding style, '" line_coding_style "', is not supported. The currently supported styles are: " strjoin(styles, ', ') '.']);
+        endswitch
 
 
     endfunction
@@ -224,6 +228,13 @@ classdef transmitter
 
     endfunction
     function plot_line_code_power_spectrum(obj)
+      if ~isa(obj, 'transmitter')
+        error("Passed object is not of the transmitter type.");
+      endif
+      if isnull(obj.line_coded_stream)
+        error("transmitter_object.line_code('line_coding_style', vcc) must be called first.");
+      endif
+
       stream = repelem(obj.line_coded_stream, 100);
 
       N = length(stream);
@@ -246,6 +257,36 @@ classdef transmitter
       ylabel('Magnitude', 'FontSize', 18);
       axis([-4 4 0 (max(obj.line_coded_stream)/50)]); %heuristic
 
+    endfunction
+    function plot_bpsk_power_spectrum(obj)
+      if ~isa(obj, 'transmitter')
+        error("Passed object is not of the transmitter type.");
+      endif
+      if isnull(obj.bpsk_modulated)
+        error("transmitter_object.bpsk() must be called first.");
+      endif
+
+      stream = obj.bpsk_modulated;
+
+      N = length(stream);
+      ts = 0.01;
+      T = N * ts ;
+      fs = 1 / ts;
+      df = 1 / T;
+
+      if(rem(N ,2)==0)
+        frequencies = -(0.5*fs) : df : (0.5*fs - df);             %% Frequency vector if x/f is even
+      else
+        frequencies = -(0.5*fs - 0.5*df) : df : (0.5*fs - 0.5*df);%% Frequency vector if x/f is odd
+      endif
+
+      S =  (fftshift(fft(stream)))/N;
+
+      plot(frequencies, abs(S), 'Color', "#003003");
+      title(['Power spectrum of BPSK-modulated stream'], 'FontSize', 20);
+      xlabel('Frequency', 'FontSize', 18);
+      ylabel('Magnitude', 'FontSize', 18);
+      axis([-4 4 0 (max(obj.line_coded_stream)/50)]); %heuristic
     endfunction
   endmethods
 endclassdef
