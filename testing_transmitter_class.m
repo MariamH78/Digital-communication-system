@@ -4,23 +4,13 @@ clear all
 graphics_toolkit('fltk')
 
 tee = transmitter();
-tee = create_stream(tee, 15);
-tee = tee.line_code("pnrz", 1);
-tee = tee.bpsk();
+tee = create_stream(tee, 10000);
+%tee = tee.line_code("urz", 1.2);
+%tee = tee.bpsk();
 
-%propertyName = 'stream';
-%tee.(propertyName)
+subplot (2, 1, 1)
+plot_line_code_power_spectrum(tee.line_code("urz", 1.2));
 
-subplot (3, 1, 1)
-tee.plot('stream')
+subplot (2, 1, 2)
+plot_line_code_power_spectrum(tee.line_code("unrz", 1.2))
 
-subplot (3, 1, 2)
-plot(tee, 'line_coded_stream')
-
-subplot (3, 1, 3)
-plot(tee, 'bpsk_modulated')
-
-terqee = transmitter([1 0 1 0]);
-
-figure;
-plot(terqee, 'stream')

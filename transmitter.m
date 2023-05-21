@@ -28,11 +28,10 @@ classdef transmitter
         endfor
         obj.stream = repelem(input_stream, 2);
         obj.stream_size = length(input_stream);
-        if (nargin >= 2)
-          obj.time_limit = obj.stream_size * 1/bitrate - 1/bitrate;
-        else
-          obj.time_limit = obj.stream_size * 1/100 - 1/100;
+        if (nargin < 2)
+          bitrate = 100
         endif
+        obj.time_limit = obj.stream_size * 1/bitrate - 1/bitrate;
 
       endif
 
@@ -46,16 +45,13 @@ classdef transmitter
           bitrate = 100;
       endif
       if nargin == 0 || nargin == 1 || (nargin >= 2 && stream_size == 0)
-        temp = randi([0 1], 1, 10000);
-        obj.stream = repelem(temp, 2);
-        obj.stream_size = 10000;
-        obj.time_limit = 10000.0 * 1/bitrate - 1/bitrate;
-      else
-        temp = randi([0 1], 1, stream_size);
-        obj.stream = repelem(temp, 2);
-        obj.stream_size = stream_size;
-        obj.time_limit = stream_size * 1/bitrate - 1/bitrate;
+        stream_size = 10000;
       endif
+
+      temp = randi([0 1], 1, stream_size);
+      obj.stream = repelem(temp, 2);
+      obj.stream_size = stream_size;
+      obj.time_limit = obj.stream_size * 1/bitrate - 1/bitrate;
 
     endfunction
 
@@ -175,6 +171,8 @@ classdef transmitter
             endif
           endif
         endfor
+      else
+        error(["The selected line coding style, '" line_coding_style "', is not supported."]);
       endif
 
 
@@ -225,7 +223,30 @@ classdef transmitter
       endif
 
     endfunction
+    function plot_line_code_power_spectrum(obj)
+      stream = repelem(obj.line_coded_stream, 100);
 
+      N = length(stream);
+      ts = 0.01;
+      T = N * ts ;
+      fs = 1 / ts;
+      df = 1 / T;
+
+      if(rem(N ,2)==0)
+        frequencies = -(0.5*fs) : df : (0.5*fs - df);             %% Frequency vector if x/f is even
+      else
+        frequencies = -(0.5*fs - 0.5*df) : df : (0.5*fs - 0.5*df);%% Frequency vector if x/f is odd
+      endif
+
+      S =  (fftshift(fft(stream)))/N;
+
+      plot(frequencies, abs(S), 'Color', "#691d29");
+      title(['Power spectrum of '  obj.line_coding_style  ' line-coded stream'], 'FontSize', 20);
+      xlabel('Frequency', 'FontSize', 18);
+      ylabel('Magnitude', 'FontSize', 18);
+      axis([-4 4 0 (max(obj.line_coded_stream)/50)]); %heuristic
+
+    endfunction
   endmethods
 endclassdef
 
