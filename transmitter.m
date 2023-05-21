@@ -177,9 +177,7 @@ classdef transmitter
 
         otherwise
           error(["The selected line coding style, '" line_coding_style "', is not supported. The currently supported styles are: " strjoin(styles, ', ') '.']);
-        endswitch
-
-
+      endswitch
     endfunction
 
     function obj = bpsk (obj)
@@ -299,8 +297,8 @@ classdef transmitter
       figure;
       hold on
 
-      for i = 1 : 8 : length(obj.(stream))
-        stairs(obj.(stream)(i : min(i + 8, length(obj.(stream)))), 'Color', "#8a4f15", 'LineWidth', 1.75);
+      for i = 1 : 3 : length(obj.(stream))
+        stairs(obj.(stream)(i : min(i + 4, length(obj.(stream)))), 'Color', "#8a4f15", 'LineWidth', 1.75);
       endfor
 
       if strcmp(stream, 'line_coded_stream')
@@ -309,7 +307,7 @@ classdef transmitter
         title('Eyediagram for transmitted 0/1 stream', 'FontSize', 20);
       endif
 
-      axis([3 9])
+      axis([2 5])
       set(gca,'XTick',[]);
 
       hold off
