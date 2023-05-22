@@ -23,18 +23,23 @@ function [sigma_array, ber_array] = sweep_over_sigma(tx_object, rx_object, numbe
   endfor
 endfunction
 
+function plot_ber(sigma_array, ber_array, line_coding_style)
+  figure;
+  semilogy(sigma_array, ber_array, 'LineWidth', 1.5, 'Color', "#D10000");
+  title(['Sigma vs BER for ' line_coding_style ' line-coded stream'], 'FontSize', 20);
+  xlabel('Sigma', 'FontSize', 18);
+  ylabel('BER', 'FontSize', 18);
+  txt = {strjoin({'Maximum BER is' num2str(max(ber_array))}, ' ') '\downarrow'};
+  text(sigma_array(length(sigma_array)), ber_array(length(ber_array)), txt, 'FontSize', 14,
+       'HorizontalAlignment','right', 'VerticalAlignment','bottom');
+endfunction
+
 tx = transmitter();
 tx = tx.create_stream(10000);
 tx = tx.line_code("urz", 1.2);
 %tx = tx.bpsk();
 rx = receiver(tx);
 
-figure;
-[sigma_array, ber_array] = sweep_over_sigma(tx, rx, 4);
-semilogy(sigma_array, ber_array, 'LineWidth', 1.5, 'Color', "#D10000");
-title(['Sigma vs BER for ' tx.line_coding_style ' line-coded stream'], 'FontSize', 20);
-xlabel('Sigma', 'FontSize', 18);
-ylabel('BER', 'FontSize', 18);
-txt = {'\rightarrow' 'Maximum BER is ' max(ber_array) };
-text(sigma_array(length(sigma_array)), ber_array(length(ber_array)), txt, 'FontSize', 14, 'HorizontalAlignment','right');
 
+[sigma_array, ber_array] = sweep_over_sigma(tx, rx, 10);
+plot_ber(sigma_array, ber_array, tx.line_coding_style);
