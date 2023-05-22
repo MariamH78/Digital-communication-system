@@ -49,7 +49,6 @@ classdef receiver
     endfunction
 
     function obj = extract_stream_from_line_code (obj)
-
       obj.extracted_stream = zeros(1, obj.stream_size);
 
       if (strcmp(obj.line_coding_style,'unrz') == 1)
@@ -118,72 +117,86 @@ classdef receiver
             endif
         endfor
       endif
+    endfunction
 
-      endfunction
+    function obj = extract_stream_from_bpsk_modulated (obj)
+      if ~isa(obj, 'receiver')
+        error("Passed object is not of the receiver type.");
+      endif
+      if isnull(obj.rx_bpsk_stream)
+        error("This receiver object does not have a BPSK stream. Make sure it was initialized with the correct transmitter object.");
+      endif
 
-      function ber = get_bit_error_rate(obj, transmitter_object)
-        if nargin < 2
-          error("The transmitter object whose stream will be compared must be passed as a second argument.");
+      obj.extracted_stream = zeros(1, obj.stream_size * 2/0.01);
+      %temp = repelem(obj.line_coded_stream, 100);
+      for i = 1 : length(obj.extracted_stream)
+        obj.extracted_stream(i) = cos(2 * 3.14159265  * 10000000 * i) * obj.rx_bpsk_stream(i);
+      endfor
+    endfunction
+
+    function ber = get_bit_error_rate(obj, transmitter_object)
+      if nargin < 2
+        error("The transmitter object whose stream will be compared must be passed as a second argument.");
+      endif
+      if ~isa(obj, 'receiver') || ~isa(transmitter_object, 'transmitter')
+        error("The function must be used as follows -> receiver_object.get_bit_error_rate(transmitter_object).");
+      endif
+      if isnull(obj.extracted_stream)
+        error("receiver_object.extract_stream_from_line_code() or extract_stream_from_bpsk_modulated must be called first!");
+      endif
+      if isnull(transmitter_object.stream)
+        error("transmitter_object's stream must first be initialized at construction time or by calling create_stream().");
+      endif
+
+      ber = 0;
+      for i = 2 : 2 : obj.stream_size * 2
+        if obj.extracted_stream(i / 2) ~= transmitter_object.stream(i)
+          ber += 1;
         endif
-        if ~isa(obj, 'receiver') || ~isa(transmitter_object, 'transmitter')
-          error("The function must be used as follows -> receiver_object.get_bit_error_rate(transmitter_object).");
-        endif
-        if isnull(obj.extracted_stream)
-          error("receiver_object.extract_stream_from_line_code() or extract_stream_from_bpsk_modulated must be called first!");
-        endif
-        if isnull(transmitter_object.stream)
-          error("transmitter_object's stream must first be initialized at construction time or by calling create_stream().");
-        endif
+      endfor
+      ber /= obj.stream_size;
 
-        ber = 0;
-        for i = 2 : 2 : obj.stream_size * 2
-          if obj.extracted_stream(i / 2) ~= transmitter_object.stream(i)
-            ber += 1;
-          endif
-        endfor
-        ber /= obj.stream_size;
+    endfunction
 
-      endfunction
+    function plot (obj, param)
+      if ~isa(obj, 'receiver')
+        error("Passed object is not of the receiver type.");
+      endif
+      if nargin < 2
+        error("You must include the parameter you want to plot.");
+      endif
 
-      function plot (obj, param)
-        if ~isa(obj, 'receiver')
-          error("Passed object is not of the receiver type.");
-        endif
-        if nargin < 2
-          error("You must include the parameter you want to plot.");
-        endif
+      if strcmp(param, 'noisy_rx_stream') == 1
+        stream = [obj.noisy_rx_stream  obj.noisy_rx_stream(length(obj.noisy_rx_stream))];
+        stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        title(['Noisy received stream with sigma = ' obj.sigma], 'FontSize', 20);
+        xlabel('Time (in S)', 'FontSize', 18);
+        ylabel('Volt (in V)', 'FontSize', 18);
 
-        if strcmp(param, 'noisy_rx_stream') == 1
-          stream = [obj.noisy_rx_stream  obj.noisy_rx_stream(length(obj.noisy_rx_stream))];
-          stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
-          title(['Noisy received stream with sigma = ' obj.sigma], 'FontSize', 20);
-          xlabel('Time (in S)', 'FontSize', 18);
-          ylabel('Volt (in V)', 'FontSize', 18);
+      elseif strcmp(param, 'rx_line_coded_stream') == 1
+        line_coded_stream = [obj.rx_line_coded_stream  obj.rx_line_coded_stream(length(obj.rx_line_coded_stream))];
+        stairs(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
+        title(['Unmodified received stream (encoded using '  obj.line_coding_style  ')'], 'FontSize', 20);
+        xlabel('Time (in S)', 'FontSize', 18);
+        ylabel('Volt (in V)', 'FontSize', 18);
 
-        elseif strcmp(param, 'rx_line_coded_stream') == 1
-          line_coded_stream = [obj.rx_line_coded_stream  obj.rx_line_coded_stream(length(obj.rx_line_coded_stream))];
-          stairs(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
-          title(['Unmodified received stream (encoded using '  obj.line_coding_style  ')'], 'FontSize', 20);
-          xlabel('Time (in S)', 'FontSize', 18);
-          ylabel('Volt (in V)', 'FontSize', 18);
+      elseif strcmp(param, 'rx_bpsk_stream') == 1
+        plot(linspace(0, obj.time_limit, length(obj.bpsk_modulated)), obj.bpsk_modulated, 'LineWidth',1.5, 'Color', "#f77f00");
+        title('Unmodified BPSK modulated received stream', 'FontSize', 20);
+        xlabel('Time (in S)', 'FontSize', 18);
+        ylabel('Amplitude (in V)', 'FontSize', 18);
 
-        elseif strcmp(param, 'rx_bpsk_stream') == 1
-          plot(linspace(0, obj.time_limit, length(obj.bpsk_modulated)), obj.bpsk_modulated, 'LineWidth',1.5, 'Color', "#f77f00");
-          title('Unmodified BPSK modulated received stream', 'FontSize', 20);
-          xlabel('Time (in S)', 'FontSize', 18);
-          ylabel('Amplitude (in V)', 'FontSize', 18);
+      elseif strcmp(param, 'extracted_stream')
+        stream = [obj.noisy_rx_stream  obj.noisy_rx_stream(length(obj.noisy_rx_stream))];
+        stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        title('Extracted message stream', 'FontSize', 20);
+        xlabel('Time (in S)', 'FontSize', 18);
+        ylabel('Data', 'FontSize', 18);
 
-        elseif strcmp(param, 'extracted_stream')
-          stream = [obj.noisy_rx_stream  obj.noisy_rx_stream(length(obj.noisy_rx_stream))];
-          stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
-          title('Extracted message stream', 'FontSize', 20);
-          xlabel('Time (in S)', 'FontSize', 18);
-          ylabel('Data', 'FontSize', 18);
-
-        else
-          error("The parameter passed to the function doesn't exist.");
-        endif
-      endfunction
+      else
+        error("The parameter passed to the function doesn't exist.");
+      endif
+    endfunction
   endmethods
 endclassdef
 

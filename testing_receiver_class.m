@@ -35,11 +35,16 @@ function plot_ber(sigma_array, ber_array, line_coding_style)
 endfunction
 
 tx = transmitter();
-tx = tx.create_stream(10000);
-tx = tx.line_code("urz", 1.2);
-%tx = tx.bpsk();
+tx = tx.create_stream(100);
+tx = tx.line_code("pnrz", 1.2);
+tx = tx.bpsk();
+
 rx = receiver(tx);
+rx = rx.extract_stream_from_bpsk_modulated();
+subplot(2, 1, 1)
+plot(rx.extracted_stream);
+subplot(2, 1, 2)
+tx.plot('stream')
 
-
-[sigma_array, ber_array] = sweep_over_sigma(tx, rx, 10);
-plot_ber(sigma_array, ber_array, tx.line_coding_style);
+%[sigma_array, ber_array] = sweep_over_sigma(tx, rx, 10);
+%plot_ber(sigma_array, ber_array, tx.line_coding_style);

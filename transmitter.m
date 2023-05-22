@@ -189,23 +189,28 @@ classdef transmitter
 
       if strcmp(param, 'stream') == 1
         stream = [obj.stream  obj.stream(length(obj.stream))];
-        stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        stream = repelem(stream, 50);
+        plot(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
         title('Unmodified bits stream (0/1)', 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Data (0/1)', 'FontSize', 18);
+        xlim = [0 0.1];
 
       elseif strcmp(param, 'line_coded_stream') == 1
         line_coded_stream = [obj.line_coded_stream  obj.line_coded_stream(length(obj.line_coded_stream))];
-        stairs(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
+        line_coded_stream = repelem(line_coded_stream, 50);
+        plot(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
         title(['Line coded bits stream (encoded using '  obj.line_coding_style  ')'], 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Volt (in V)', 'FontSize', 18);
+        xlim = [0 0.1];
 
       elseif strcmp(param, 'bpsk_modulated') == 1
         plot(linspace(0, obj.time_limit, length(obj.bpsk_modulated)), obj.bpsk_modulated, 'LineWidth',1.5, 'Color', "#f77f00");
         title('BPSK modulated stream', 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Amplitude (in V)', 'FontSize', 18);
+        xlim = [0 0.1];
 
       else
         error("The parameter passed to the function doesn't exist.");
@@ -272,28 +277,28 @@ classdef transmitter
       axis([-4 4 0 (max(obj.line_coded_stream)/50)]); %heuristic
     endfunction
 
-    function plot_eyediagram(obj, stream)
+    function plot_eyediagram(obj, chosen_stream)
       if (nargin < 2)
-        stream = line_coded_stream
-      elseif strcmp(stream, 'line_coded_stream') ~= 1 && strcmp(stream, 'stream') ~= 1
+        chosen_stream = line_coded_stream
+      elseif strcmp(chosen_stream, 'line_coded_stream') ~= 1 && strcmp(chosen_stream, 'stream') ~= 1
         error("The given parameter is not supported by this function. This function only supports 'stream' and 'line_coded_stream'");
       endif
 
-      figure;
       hold on
 
-      for i = 1 : 3 : length(obj.(stream))
-        stairs(obj.(stream)(i : min(i + 4, length(obj.(stream)))), 'Color', "#8a4f15", 'LineWidth', 1.75);
+      stream = repelem(obj.(chosen_stream), 50);
+      for i = 1 : 3 : length(stream)
+        plot(stream(i : min(i + 4, length(stream))), 'Color', "#8a4f15", 'LineWidth', 1.75);
       endfor
 
-      if strcmp(stream, 'line_coded_stream')
+      if strcmp(chosen_stream, 'line_coded_stream')
         title(['Eyediagram for ' obj.line_coding_style ' line-coded stream'], 'FontSize', 20);
       else
         title('Eyediagram for transmitted 0/1 stream', 'FontSize', 20);
       endif
 
       axis([2 5])
-      set(gca,'XTick',[]);
+      set(gca,'XTickLabel',[0 0.01 0.02 0.03 0.04 0.05 0.06]);
 
       hold off
     endfunction
