@@ -33,7 +33,7 @@ classdef transmitter
         obj.stream_size = length(input_stream);
 
         if (nargin < 2)
-          bitrate = 100
+          bitrate = 100;
         endif
 
         obj.time_limit = obj.stream_size * 1/bitrate - 1/bitrate;
@@ -295,9 +295,9 @@ classdef transmitter
       stream = repelem(stream, 50);
       bit_time = obj.time_limit / (obj.stream_size - 1);
       for i = 1 : 300 : length(stream) - 300
-        plot(stream(i : i + 299), 'Color', "#8a4f15", 'LineWidth', 1.25);
+        plot(linspace(0, bit_time*4, 300), stream(i : i + 299), 'Color', "#8a4f15", 'LineWidth', 1.25);
       endfor
-%linspace(0, bit_time*4, 101),
+%,
       if strcmp(chosen_stream, 'line_coded_stream')
         title(['Eyediagram for ' obj.line_coding_style ' line-coded stream'], 'FontSize', 20);
         ylabel('Volt', 'FontSize', 18);
@@ -307,8 +307,7 @@ classdef transmitter
       endif
 
       xlabel('Time', 'FontSize', 18);
-      %axis([(0.99 * obj.time_limit / (3 * 4))  ((obj.time_limit/3) * 1.1)])
-      axis([75 225])
+      axis([(bit_time) (3 * bit_time)])
       hold off
     endfunction
   endmethods
