@@ -209,6 +209,7 @@ classdef receiver
         title(['Noisy received stream with sigma = ' num2str(obj.sigma)], 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Volt (in V)', 'FontSize', 18);
+        axis([0 min(0.5, obj.time_limit)]);
 
       elseif strcmp(param, 'rx_line_coded_stream') == 1
         line_coded_stream = [obj.rx_line_coded_stream  obj.rx_line_coded_stream(length(obj.rx_line_coded_stream))];
@@ -217,24 +218,27 @@ classdef receiver
         title(['Unmodified received stream (encoded using '  obj.line_coding_style  ')'], 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Volt (in V)', 'FontSize', 18);
+        axis([0 min(0.5, obj.time_limit)]);
 
       elseif strcmp(param, 'rx_bpsk_stream') == 1
         plot(linspace(0, obj.time_limit, length(obj.bpsk_modulated)), obj.bpsk_modulated, 'LineWidth',1.5, 'Color', "#f77f00");
         title('Unmodified BPSK modulated received stream', 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Amplitude (in V)', 'FontSize', 18);
+        axis([0 min(0.5, obj.time_limit)]);
 
       elseif strcmp(param, 'extracted_stream')
         stream = repelem(obj.extracted_stream, 2);
         stream = [stream  stream(length(stream))];
         stream = repelem(stream, 100);
-        plot(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        plot(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#004225");
         title('Extracted message stream', 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Data', 'FontSize', 18);
+        axis([0 min(0.5, obj.time_limit)]);
 
       else
-        error(["The parameter passed to the function" param " doesn't exist."]);
+        error(["The parameter passed to the function " param " doesn't exist."]);
       endif
     endfunction
   endmethods

@@ -25,7 +25,7 @@ classdef transmitter
 
         for i = 1 : length(input_stream)
           if input_stream(i) ~= 0 && input_stream(i) ~= 1
-            error(["Data entered must have only 0's and 1's. The entry number " string(i) " is neither."]);
+            error(["Data entered must have only 0's and 1's. The entry at index " string(i) " is neither."]);
           endif
         endfor
 
@@ -190,27 +190,27 @@ classdef transmitter
       if strcmp(param, 'stream') == 1
         stream = [obj.stream  obj.stream(length(obj.stream))];
         stream = repelem(stream, 50);
-        plot(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        plot(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.55, 'Color', "#003049");
         title('Unmodified bits stream (0/1)', 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Data (0/1)', 'FontSize', 18);
-        xlim = [0 0.1];
+        axis([0 min(0.5, obj.time_limit)]);
 
       elseif strcmp(param, 'line_coded_stream') == 1
         line_coded_stream = [obj.line_coded_stream  obj.line_coded_stream(length(obj.line_coded_stream))];
         line_coded_stream = repelem(line_coded_stream, 50);
-        plot(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
+        plot(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.55, 'Color', "#d62828");
         title(['Line coded bits stream (encoded using '  obj.line_coding_style  ')'], 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Volt (in V)', 'FontSize', 18);
-        xlim = [0 0.1];
+        axis([0 min(0.5, obj.time_limit)]);
 
       elseif strcmp(param, 'bpsk_modulated') == 1
         plot(linspace(0, obj.time_limit, length(obj.bpsk_modulated)), obj.bpsk_modulated, 'LineWidth',1.5, 'Color', "#f77f00");
         title('BPSK modulated stream', 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Amplitude (in V)', 'FontSize', 18);
-        xlim = [0 0.1];
+        axis([0 min(0.5, obj.time_limit)]);
 
       else
         error(["The parameter passed to the function" param " doesn't exist."]);
@@ -225,7 +225,7 @@ classdef transmitter
         error("transmitter_object.line_code('line_coding_style', vcc) must be called first.");
       endif
 
-      stream = repelem(obj.line_coded_stream, 50);
+      stream = repelem(obj.line_coded_stream, 100);
       N = length(stream);
       ts = 0.01;
       T = N * ts ;
@@ -240,11 +240,11 @@ classdef transmitter
 
       S =  (fftshift(fft(stream)))/N;
 
-      plot(frequencies, abs(S.^2), 'Color', "#691d29");
+      plot(frequencies, abs(S), 'Color', "#691d29");
       title(['Power spectrum of '  obj.line_coding_style  ' line-coded stream'], 'FontSize', 20);
       xlabel('Frequency', 'FontSize', 18);
       ylabel('Magnitude', 'FontSize', 18);
-      axis([-4 4 0 (max(obj.line_coded_stream)/50)]); %heuristic
+      axis([-4 4 0 (max(obj.line_coded_stream)/45)]); %heuristic
     endfunction
 
     function plot_bpsk_power_spectrum(obj)
@@ -274,7 +274,7 @@ classdef transmitter
       title(['Power spectrum of BPSK-modulated stream'], 'FontSize', 20);
       xlabel('Frequency', 'FontSize', 18);
       ylabel('Magnitude', 'FontSize', 18);
-      axis([-4 4 0 (max(obj.line_coded_stream)/50)]); %heuristic
+      axis([-4 4 0 (max(obj.line_coded_stream)/45)]); %heuristic
     endfunction
 
     function plot_eyediagram(obj, chosen_stream)
@@ -286,11 +286,11 @@ classdef transmitter
       if (length(obj.(chosen_stream)) < 40)
         warning("plot_eyediagram doesn't work properly with a stream size of less than 20 bits.");
       endif
-      if (obj.stream_size > 5000)
-        warning("Stream size was capped to 5000 bits to speed up eyediagram generation.");
+      if (obj.stream_size > 1000)
+        warning("Stream size was capped to 1000 bits to speed up eyediagram generation.");
       endif
       hold on
-      stream = obj.(chosen_stream)(1:min(obj.stream_size * 2, 5000));
+      stream = obj.(chosen_stream)(1:min(obj.stream_size * 2, 1000));
       stream = [stream stream(length(stream))];
       stream = repelem(stream, 50);
       bit_time = obj.time_limit / (obj.stream_size - 1);
