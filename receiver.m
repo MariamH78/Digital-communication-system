@@ -45,7 +45,7 @@ classdef receiver
 
       noise = sigma * randn(1, length(obj.rx_line_coded_stream));
       obj.sigma = sigma;
-      obj.noisy_rx_stream = obj.rx_line_coded_stream + noise;
+      obj.noisy_rx_stream += noise;
     endfunction
 
     function obj = extract_stream_from_line_code (obj)
@@ -115,11 +115,14 @@ classdef receiver
             if obj.noisy_rx_stream(i - 1) > decision_level && obj.noisy_rx_stream(i) < decision_level
               obj.extracted_stream(i / 2) = 1;
             endif
+            obj.noisy_rx_stream(i - 1)
+            obj.noisy_rx_stream(i)
+            i / 2
         endfor
       endif
     endfunction
 
-    function obj = extract_stream_from_bpsk_modulated (obj)
+    function obj = extract_line_code_from_bpsk_modulated (obj)
       if ~isa(obj, 'receiver')
         error("Passed object is not of the receiver type.");
       endif
@@ -127,10 +130,16 @@ classdef receiver
         error("This receiver object does not have a BPSK stream. Make sure it was initialized with the correct transmitter object.");
       endif
 
-      obj.extracted_stream = zeros(1, obj.stream_size * 2/0.01);
-      %temp = repelem(obj.line_coded_stream, 100);
-      for i = 1 : length(obj.extracted_stream)
-        obj.extracted_stream(i) = cos(2 * 3.14159265  * 10000000 * i) * obj.rx_bpsk_stream(i);
+      temp = zeros(1, obj.stream_size /0.01);
+      for i = 1 : length(temp)
+        temp(i) = cos(2 * 3.14159265  * 10000000 * i) * obj.rx_bpsk_stream(i);
+      endfor
+
+      bitrate = (obj.stream_size - 1) / obj.time_limit
+      obj.noisy_rx_stream = zeros(1, obj.stream_size);
+
+      for i = 1 : 50 : length(temp)
+        obj.noisy_rx_stream((i - 1) / 50 + 1) = sum(temp(i : i + 49)) * (4 / bitrate);
       endfor
     endfunction
 
@@ -168,14 +177,16 @@ classdef receiver
 
       if strcmp(param, 'noisy_rx_stream') == 1
         stream = [obj.noisy_rx_stream  obj.noisy_rx_stream(length(obj.noisy_rx_stream))];
-        stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
-        title(['Noisy received stream with sigma = ' obj.sigma], 'FontSize', 20);
+        stream = repelem(stream, 50);
+        plot(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        title(['Noisy received stream with sigma = ' num2str(obj.sigma)], 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Volt (in V)', 'FontSize', 18);
 
       elseif strcmp(param, 'rx_line_coded_stream') == 1
         line_coded_stream = [obj.rx_line_coded_stream  obj.rx_line_coded_stream(length(obj.rx_line_coded_stream))];
-        stairs(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
+        line_coded_stream = repelem(line_coded_stream, 50);
+        plot(linspace(0, obj.time_limit, length(line_coded_stream)), line_coded_stream, 'LineWidth',1.5, 'Color', "#d62828");
         title(['Unmodified received stream (encoded using '  obj.line_coding_style  ')'], 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Volt (in V)', 'FontSize', 18);
@@ -187,14 +198,16 @@ classdef receiver
         ylabel('Amplitude (in V)', 'FontSize', 18);
 
       elseif strcmp(param, 'extracted_stream')
-        stream = [obj.noisy_rx_stream  obj.noisy_rx_stream(length(obj.noisy_rx_stream))];
-        stairs(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
+        stream = repelem(obj.extracted_stream, 2);
+        stream = [stream  stream(length(stream))];
+        stream = repelem(stream, 100);
+        plot(linspace(0, obj.time_limit, length(stream)), stream, 'LineWidth', 1.5, 'Color', "#003049");
         title('Extracted message stream', 'FontSize', 20);
         xlabel('Time (in S)', 'FontSize', 18);
         ylabel('Data', 'FontSize', 18);
 
       else
-        error("The parameter passed to the function doesn't exist.");
+        error(["The parameter passed to the function" param " doesn't exist."]);
       endif
     endfunction
   endmethods

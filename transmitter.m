@@ -173,7 +173,7 @@ classdef transmitter
       endif
 
       obj.bpsk_modulated = zeros(1, obj.stream_size * 2/0.01);
-      temp = repelem(obj.line_coded_stream, 100);
+      temp = repelem(obj.line_coded_stream, 50);
       for i = 1 : length(temp)
         obj.bpsk_modulated (i) = cos(2 * 3.14159265  * 10000000 * i) * temp(i);
       endfor
@@ -213,7 +213,7 @@ classdef transmitter
         xlim = [0 0.1];
 
       else
-        error("The parameter passed to the function doesn't exist.");
+        error(["The parameter passed to the function" param " doesn't exist."]);
       endif
     endfunction
 
@@ -225,7 +225,7 @@ classdef transmitter
         error("transmitter_object.line_code('line_coding_style', vcc) must be called first.");
       endif
 
-      stream = repelem(obj.line_coded_stream, 100);
+      stream = repelem(obj.line_coded_stream, 50);
       N = length(stream);
       ts = 0.01;
       T = N * ts ;
@@ -240,7 +240,7 @@ classdef transmitter
 
       S =  (fftshift(fft(stream)))/N;
 
-      plot(frequencies, abs(S), 'Color', "#691d29");
+      plot(frequencies, abs(S.^2), 'Color', "#691d29");
       title(['Power spectrum of '  obj.line_coding_style  ' line-coded stream'], 'FontSize', 20);
       xlabel('Frequency', 'FontSize', 18);
       ylabel('Magnitude', 'FontSize', 18);
@@ -270,7 +270,7 @@ classdef transmitter
 
       S =  (fftshift(fft(stream)))/N;
 
-      plot(frequencies, abs(S), 'Color', "#003003");
+      plot(frequencies, abs(S.^2), 'Color', "#003003");
       title(['Power spectrum of BPSK-modulated stream'], 'FontSize', 20);
       xlabel('Frequency', 'FontSize', 18);
       ylabel('Magnitude', 'FontSize', 18);
@@ -283,23 +283,32 @@ classdef transmitter
       elseif strcmp(chosen_stream, 'line_coded_stream') ~= 1 && strcmp(chosen_stream, 'stream') ~= 1
         error("The given parameter is not supported by this function. This function only supports 'stream' and 'line_coded_stream'");
       endif
-
+      if (length(obj.(chosen_stream)) < 40)
+        warning("plot_eyediagram doesn't work properly with a stream size of less than 20 bits.");
+      endif
+      if (obj.stream_size > 5000)
+        warning("Stream size was capped to 5000 bits to speed up eyediagram generation.");
+      endif
       hold on
-
-      stream = repelem(obj.(chosen_stream), 50);
-      for i = 1 : 3 : length(stream)
-        plot(stream(i : min(i + 4, length(stream))), 'Color', "#8a4f15", 'LineWidth', 1.75);
+      stream = obj.(chosen_stream)(1:min(obj.stream_size * 2, 5000));
+      stream = [stream stream(length(stream))];
+      stream = repelem(stream, 50);
+      bit_time = obj.time_limit / (obj.stream_size - 1);
+      for i = 1 : 300 : length(stream) - 300
+        plot(stream(i : i + 299), 'Color', "#8a4f15", 'LineWidth', 1.25);
       endfor
-
+%linspace(0, bit_time*4, 101),
       if strcmp(chosen_stream, 'line_coded_stream')
         title(['Eyediagram for ' obj.line_coding_style ' line-coded stream'], 'FontSize', 20);
+        ylabel('Volt', 'FontSize', 18);
       else
         title('Eyediagram for transmitted 0/1 stream', 'FontSize', 20);
+        ylabel('Data (0/1)', 'FontSize', 18);
       endif
 
-      axis([2 5])
-      set(gca,'XTickLabel',[0 0.01 0.02 0.03 0.04 0.05 0.06]);
-
+      xlabel('Time', 'FontSize', 18);
+      %axis([(0.99 * obj.time_limit / (3 * 4))  ((obj.time_limit/3) * 1.1)])
+      axis([75 225])
       hold off
     endfunction
   endmethods

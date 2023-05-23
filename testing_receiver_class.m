@@ -32,19 +32,27 @@ function plot_ber(sigma_array, ber_array, line_coding_style)
   txt = {strjoin({'Maximum BER is' num2str(max(ber_array))}, ' ') '\downarrow'};
   text(sigma_array(length(sigma_array)), ber_array(length(ber_array)), txt, 'FontSize', 14,
        'HorizontalAlignment','right', 'VerticalAlignment','bottom');
-endfunction
+  axis([min(sigma_array) (1.1 * max(sigma_array))]);
+  endfunction
 
 tx = transmitter();
-tx = tx.create_stream(100);
-tx = tx.line_code("pnrz", 1.2);
-tx = tx.bpsk();
+tx = tx.create_stream(1000);
+tx = tx.line_code("unrz", 1);
+%tx = tx.bpsk();
 
 rx = receiver(tx);
-rx = rx.extract_stream_from_bpsk_modulated();
-subplot(2, 1, 1)
-plot(rx.extracted_stream);
-subplot(2, 1, 2)
-tx.plot('stream')
+%rx = rx.extract_line_code_from_bpsk_modulated();
+rx = rx.extract_stream_from_line_code();
 
-%[sigma_array, ber_array] = sweep_over_sigma(tx, rx, 10);
-%plot_ber(sigma_array, ber_array, tx.line_coding_style);
+%rx.rx_line_coded_stream
+%rx.extracted_stream
+
+%subplot(3, 1, 1)
+%rx.plot('rx_line_coded_stream')
+%subplot(3, 1, 2)
+%plot(rx, 'noisy_rx_stream');
+%subplot(3, 1, 3)
+%rx.plot('extracted_stream');
+
+[sigma_array, ber_array] = sweep_over_sigma(tx, rx, 100);
+plot_ber(sigma_array, ber_array, tx.line_coding_style);
