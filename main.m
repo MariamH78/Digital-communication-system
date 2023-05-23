@@ -155,11 +155,11 @@ rx2.plot('extracted_stream');
 
 figure('Name', 'Uni-polar BER plots', 'Position', figure_position);
 subplot(1, 2, 1);
-[sigma_array, ber_array] = sweep_over_sigma(tx1, rx1, 10);
+[sigma_array, ber_array] = sweep_over_sigma(tx1, rx1, 40);
 plot_ber(sigma_array, ber_array, tx1.line_coding_style);
 
 subplot(1, 2, 2)
-[sigma_array, ber_array] = sweep_over_sigma(tx2, rx2, 10);
+[sigma_array, ber_array] = sweep_over_sigma(tx2, rx2, 40);
 plot_ber(sigma_array, ber_array, tx2.line_coding_style);
 
 
@@ -184,11 +184,11 @@ rx4.plot('extracted_stream');
 
 figure('Name', 'Polar BER plots', 'Position', figure_position);
 subplot(1, 2, 1);
-[sigma_array, ber_array] = sweep_over_sigma(tx3, rx3, 10);
+[sigma_array, ber_array] = sweep_over_sigma(tx3, rx3, 40);
 plot_ber(sigma_array, ber_array, tx3.line_coding_style);
 
 subplot(1, 2, 2)
-[sigma_array, ber_array] = sweep_over_sigma(tx4, rx4, 10);
+[sigma_array, ber_array] = sweep_over_sigma(tx4, rx4, 40);
 plot_ber(sigma_array, ber_array, tx4.line_coding_style);
 
 
@@ -213,11 +213,11 @@ rx6.plot('extracted_stream');
 
 figure('Name', 'Bipolar BER plots', 'Position', figure_position);
 subplot(1, 2, 1);
-[sigma_array, ber_array] = sweep_over_sigma(tx5, rx5, 10);
-plot_ber(sigma_array, ber_array, tx5.line_coding_style);
+[sigma_array, ber_array, detected_ber_array] = sweep_over_sigma(tx5, rx5, 40);
+plot_ber(sigma_array, ber_array, tx5.line_coding_style, detected_ber_array);
 
 subplot(1, 2, 2)
-[sigma_array, ber_array, detected_ber_array] = sweep_over_sigma(tx6, rx6, 10);
+[sigma_array, ber_array, detected_ber_array] = sweep_over_sigma(tx6, rx6, 40);
 plot_ber(sigma_array, ber_array, tx6.line_coding_style, detected_ber_array);
 
 # 4. Manchester:
@@ -230,9 +230,8 @@ rx5.plot('rx_line_coded_stream');
 subplot(2, 1, 2);
 rx5.plot('extracted_stream');
 
-figure('Name', 'Manchester BER plot', 'Position', figure_position);
-subplot(1, 2, 1);
-[sigma_array, ber_array] = sweep_over_sigma(tx7, rx7, 10);
+figure('Name', 'Manchester BER plot');
+[sigma_array, ber_array] = sweep_over_sigma(tx7, rx7, 40);
 plot_ber(sigma_array, ber_array, tx7.line_coding_style);
 
 
@@ -268,11 +267,11 @@ rx_bpsk = rx_bpsk.extract_line_code_from_bpsk_modulated();
 rx_bpsk = rx_bpsk.extract_stream_from_line_code();
 
 figure('Name', 'BPSK, receiver', 'Position', figure_position);
-subplot(3, 1, 1)
-rx_bpsk.plot('rx_line_coded_stream')
-subplot(3, 1, 2)
+subplot(3, 1, 1);
+rx_bpsk.plot('rx_line_coded_stream');
+subplot(3, 1, 2);
 plot(rx_bpsk, 'noisy_rx_stream');
-subplot(3, 1, 3)
+subplot(3, 1, 3);
 rx_bpsk.plot('extracted_stream');
 
 BER = rx_bpsk.get_bit_error_rate(tx_bpsk);
@@ -282,16 +281,17 @@ BER
 ################################################################################
 
 # Adding noise without sweeping example:
+
 rx_noise = receiver(tx1);
 rx_noise = rx_noise.add_noise(0.5);
 rx_noise = rx_noise.extract_stream_from_line_code();
 
 figure('Name', 'Testing noisy RX', 'Position', figure_position);
-subplot(3, 1, 1)
-rx_noise.plot('rx_line_coded_stream')
-subplot(3, 1, 2)
+subplot(3, 1, 1);
+rx_noise.plot('rx_line_coded_stream');
+subplot(3, 1, 2);
 rx_noise.plot('noisy_rx_stream');
-subplot(3, 1, 3)
+subplot(3, 1, 3);
 rx_noise.plot('extracted_stream');
 
 BER_test = rx_noise.get_bit_error_rate(tx1);

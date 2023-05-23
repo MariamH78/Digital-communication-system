@@ -139,12 +139,9 @@ classdef receiver
       if (strcmp(obj.line_coding_style,'manchester')==1)
         decision_level = (obj.vcc_positive + obj.vcc_negative) / 2;
         for i = 2 : 2 : obj.stream_size * 2
-            if obj.noisy_rx_stream(i - 1) > decision_level && obj.noisy_rx_stream(i) < decision_level
-              obj.extracted_stream(i / 2) = 1;
-            endif
-            obj.noisy_rx_stream(i - 1)
-            obj.noisy_rx_stream(i)
-            i / 2
+          if obj.noisy_rx_stream(i - 1) > decision_level && obj.noisy_rx_stream(i) < decision_level
+            obj.extracted_stream(i / 2) = 1;
+          endif
         endfor
       endif
     endfunction
