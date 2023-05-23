@@ -172,7 +172,7 @@ classdef transmitter
         error("transmitter_object.line_code('pnrz', vcc) must be called first.");
       endif
 
-      obj.bpsk_modulated = zeros(1, obj.stream_size * 2/0.01);
+      obj.bpsk_modulated = zeros(1, obj.stream_size/0.01);
       temp = repelem(obj.line_coded_stream, 50);
       for i = 1 : length(temp)
         obj.bpsk_modulated (i) = cos(2 * 3.14159265  * 10000000 * i) * temp(i);
