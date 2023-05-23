@@ -3,6 +3,7 @@ classdef receiver
     rx_line_coded_stream = []; %unmodified transmitter stream
     noisy_rx_stream = [];
     sigma = 0.0;
+    detected_errors = 0.0; %Used only for line_coding_style bpnrz/bprz
     stream_size = 0.0;
     time_limit = 0.0;
 
@@ -32,6 +33,7 @@ classdef receiver
       obj.vcc_positive = transmitter_object.vcc_positive;
       obj.vcc_negative = transmitter_object.vcc_negative;
       obj.time_limit = transmitter_object.time_limit;
+      obj.detected_errors = 0;
 
     endfunction
 
@@ -50,6 +52,7 @@ classdef receiver
 
     function obj = extract_stream_from_line_code (obj)
       obj.extracted_stream = zeros(1, obj.stream_size);
+      obj.detected_errors = 0;
 
       if (strcmp(obj.line_coding_style,'unrz') == 1)
         decision_level = obj.vcc_positive / 2;
@@ -91,10 +94,22 @@ classdef receiver
       if (strcmp(obj.line_coding_style,'bpnrz')==1)
         decision_level_high = obj.vcc_positive / 2;
         decision_level_low  = obj.vcc_negative / 2;
+        flag = 0.5;
         for i = 2 : 2 : obj.stream_size * 2
             if ((obj.noisy_rx_stream(i - 1) + obj.noisy_rx_stream(i)) / 2 > decision_level_high ||
                (obj.noisy_rx_stream(i - 1) + obj.noisy_rx_stream(i)) / 2 < decision_level_low)
               obj.extracted_stream(i / 2) = 1;
+            endif
+            if (obj.noisy_rx_stream(i - 1) + obj.noisy_rx_stream(i)) / 2 > decision_level_high
+              if flag == 1
+                obj.detected_errors += 1;
+              endif
+              flag = 1;
+            elseif (obj.noisy_rx_stream(i - 1) + obj.noisy_rx_stream(i)) / 2 < decision_level_low
+              if flag == 0
+                obj.detected_errors += 1;
+              endif
+              flag = 0;
             endif
         endfor
       endif
@@ -102,9 +117,21 @@ classdef receiver
       if (strcmp(obj.line_coding_style,'bprz')==1)
         decision_level_high = obj.vcc_positive / 2;
         decision_level_low  = obj.vcc_negative / 2;
+        flag = 0.5;
         for i = 2 : 2 : obj.stream_size * 2
             if obj.noisy_rx_stream(i - 1) > decision_level_high || obj.noisy_rx_stream(i - 1) < decision_level_low
               obj.extracted_stream(i / 2) = 1;
+            endif
+            if obj.noisy_rx_stream(i - 1) > decision_level_high
+              if flag == 1
+                obj.detected_errors += 1;
+              endif
+              flag = 1;
+            elseif obj.noisy_rx_stream(i - 1) < decision_level_low
+              if flag == 0
+                obj.detected_errors += 1;
+              endif
+              flag = 0;
             endif
         endfor
       endif
