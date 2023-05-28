@@ -84,11 +84,8 @@ classdef transmitter
       index = find(strcmp(styles, line_coding_style));
       switch index
         case 1 %unipolar non-return to zero
-          for i = 1 : obj.stream_size * 2
-            if (obj.stream(i) == 1)
-              obj.line_coded_stream(i) = vcc_positive;
-            endif
-          endfor
+          obj.line_coded_stream = (obj.stream == 1) .* vcc_positive;
+
         case 2  %unipolar return to zero
           for i = 1 : obj.stream_size * 2
             if (obj.stream(i) == 1 && (mod(i, 2) == 1))
@@ -97,13 +94,7 @@ classdef transmitter
           endfor
 
         case 3 %polar non-return to zero
-          for i = 1 : obj.stream_size * 2
-            if (obj.stream(i) == 1)
-              obj.line_coded_stream(i) = vcc_positive;
-            else
-              obj.line_coded_stream(i) = vcc_negative;
-            endif
-          endfor
+          obj.line_coded_stream = (obj.stream == 1) .* vcc_positive + (obj.stream ~= 1) .* vcc_negative;
 
         case 4 %polar return to zero
           for i = 1 : obj.stream_size * 2
@@ -175,7 +166,7 @@ classdef transmitter
       obj.bpsk_modulated = zeros(1, obj.stream_size/0.01);
       temp = repelem(obj.line_coded_stream, 50);
       for i = 1 : length(temp)
-        obj.bpsk_modulated (i) = cos(2 * 3.14159265  * 10000000 * i) * temp(i);
+        obj.bpsk_modulated (i) = cos(2 * 3.14159265  * 1e9 * i) * temp(i);
       endfor
     endfunction
 
@@ -225,7 +216,7 @@ classdef transmitter
         error("transmitter_object.line_code('line_coding_style', vcc) must be called first.");
       endif
 
-      stream = repelem(obj.line_coded_stream, 100);
+      stream = repelem(obj.line_coded_stream, 50);
       N = length(stream);
       ts = 0.01;
       T = N * ts ;
@@ -238,13 +229,13 @@ classdef transmitter
         frequencies = -(0.5*fs - 0.5*df) : df : (0.5*fs - 0.5*df);%% Frequency vector if x/f is odd
       endif
 
-      S =  (fftshift(fft(stream)))/N;
+      S =  fftshift((fft(stream)))/N;
 
-      plot(frequencies, abs(S), 'Color', "#691d29");
+      plot(frequencies, abs(S.^2), 'Color', "#691d29");
       title(['Power spectrum of '  obj.line_coding_style  ' line-coded stream'], 'FontSize', 20);
       xlabel('Frequency', 'FontSize', 18);
       ylabel('Magnitude', 'FontSize', 18);
-      axis([-4 4 0 (max(obj.line_coded_stream)/45)]); %heuristic
+      axis([-5 5 0 (max(obj.line_coded_stream)/3000)]); %heuristic
     endfunction
 
     function plot_bpsk_power_spectrum(obj)
@@ -274,7 +265,7 @@ classdef transmitter
       title(['Power spectrum of BPSK-modulated stream'], 'FontSize', 20);
       xlabel('Frequency', 'FontSize', 18);
       ylabel('Magnitude', 'FontSize', 18);
-      axis([-4 4 0 (max(obj.line_coded_stream)/45)]); %heuristic
+      axis([-30 30 0 (max(obj.line_coded_stream)/1500)]); %heuristic
     endfunction
 
     function plot_eyediagram(obj, chosen_stream)

@@ -156,7 +156,7 @@ classdef receiver
 
       temp = zeros(1, obj.stream_size /0.01);
       for i = 1 : length(temp)
-        temp(i) = cos(2 * 3.14159265  * 10000000 * i) * obj.rx_bpsk_stream(i);
+        temp(i) = cos(2 * 3.14159265  * 1e9 * i) * obj.rx_bpsk_stream(i);
       endfor
 
       bitrate = (obj.stream_size - 1) / obj.time_limit;
